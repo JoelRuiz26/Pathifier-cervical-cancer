@@ -27,8 +27,12 @@
 
 
 /#GTEX TCGA 
+
 /#19  271
 
+
 /table(metadata$sample_type)
+
 /#Primary Tumor  Solid Tissue Normal 
+
 /#268                  22
