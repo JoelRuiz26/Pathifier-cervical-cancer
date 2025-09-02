@@ -1,38 +1,52 @@
 
-/Information about count matrix and metadata
+Information about count matrix and metadata
 
 
-/24M     ./counts.rds
-/8.5K    ./metadata.rds
+###COUNTS###
 
-/dim(counts)
+#24M     counts.rds
 
-/#[1] 11544   291
-
-/colnames(metadata)
-
-
-/#[1] "specimenID"         "source"             "cases.submitter_id" "sample_type"        "figo_stage"        
-
-/#[6] "primary_diagnosis"  "HPV_type"           "HPV_clade"
-
-
-/dim(metadata)
-
-/#[1] 290   8
+#8.5K    metadata.rds
 
 
 
-/table(metadata$source)
+#Rows: 290
+
+#Columns: 8
+
+#$ specimenID         <chr> "TCGA-C5-A1M5-01A-11R-A13Y-07", "TCGA-EK-A2R9-01A-11R-A18M-07", "TCGA-EA-A5O9-01A-11R-A28H-07"…
+
+#$ source             <chr> "TCGA", "TCGA", "TCGA", "TCGA", "TCGA", "TCGA", "TCGA", "TCGA", "TCGA", "TCGA", "TCGA", "TCGA"…
+
+#$ cases.submitter_id <chr> "TCGA-C5-A1M5", "TCGA-EK-A2R9", "TCGA-EA-A5O9", "TCGA-C5-A902", "TCGA-C5-A8XH", "TCGA-C5-A3HL"…
+
+#$ sample_type        <chr> "Primary Tumor", "Primary Tumor", "Primary Tumor", "Primary Tumor", "Primary Tumor", "Primary …
+
+#$ figo_stage         <chr> "Stage IB", "Stage IB1", "Stage IB2", "Stage IB2", "Stage IB1", "Stage IB2", "Stage IB1", "Sta…
+
+#$ primary_diagnosis  <chr> "Squamous cell carcinoma, NOS", "Squamous cell carcinoma, large cell, nonkeratinizing, NOS", "…
+
+#$ HPV_type           <chr> "HPV33", "HPV33", "HPV16", "HPV16", "HPV16", "HPV16", "HPV16", "HPV16", "HPV16", "HPV16", "HPV…
+
+#$ HPV_clade          <chr> "A9_clade", "A9_clade", "A9_clade", "A9_clade", "A9_clade", "A9_clade", "A9_clade", "A9_clade"
 
 
-/#GTEX TCGA 
 
-/#19  271
+###METADATA###
 
 
-/table(metadata$sample_type)
+#table(metadata$source)
 
-/#Primary Tumor  Solid Tissue Normal 
 
-/#268                  22
+#GTEX	 	TCGA 
+
+#19  		271
+
+
+
+#table(metadata$sample_type)
+
+
+#Primary Tumor	  Solid Tissue Normal 
+
+#268            	      22
