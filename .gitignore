@@ -7,7 +7,7 @@
 # Track only specific files in any directory
 !.gitignore
 !README*
-
+!*.R
 # (Optional) Allow bash and markdown scripts
 !*.sh
 #!*.md
