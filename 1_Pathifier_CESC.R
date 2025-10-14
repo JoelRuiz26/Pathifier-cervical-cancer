@@ -10,7 +10,7 @@ suppressPackageStartupMessages({
 setwd("~/Pathifier-cervical-cancer/")
 # --- Load expression data (genes in rows; samples in columns) ---
 # The first column must contain gene identifiers (named "Gene"), which will be moved to rownames.
-exp.matrix <- readRDS("Data/counts_ARSyNSeq.rds") %>% as.data.frame()
+exp.matrix <- readRDS("Data/counts.rds") %>% as.data.frame()
 
 # --- Load sample metadata to derive phenotypes (Normal vs Tumor) ---
 metadata <- readRDS("Data/metadata.rds")
