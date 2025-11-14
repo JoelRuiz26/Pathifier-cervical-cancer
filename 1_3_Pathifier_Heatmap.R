@@ -16,7 +16,7 @@ suppressPackageStartupMessages({
 ###############################################################################
 ## Load Pathifier results and turn into a matrix
 ###############################################################################
-load("1_1_PDS.RData")
+load("/STORAGE/csbig/jruiz/1_1_PDS.RData")
 PDSmatrix <- t(mapply(FUN = c, PDS$scores))
 
 ###############################################################################

@@ -1,46 +1,32 @@
 ################################################################################
 # Running PATHIFIER (Drier et al., 2013)
-# Modified from Github: https://github.com/AngelCampos-Miguel Angel Garcia-Campos
+# Versión HALLMARK (MSigDB H)
 ################################################################################
-# --- Packages ---
-# msigdbr: retrieve KEGG pathways; dplyr: wrangling; pathifier: quantification
 suppressPackageStartupMessages({
   library(msigdbr); library(dplyr); library(pathifier)
 })
+
 setwd("~/Pathifier-cervical-cancer/")
+
 # --- Load expression data (genes in rows; samples in columns) ---
-# The first column must contain gene identifiers (named "Gene"), which will be moved to rownames.
 exp.matrix <- readRDS("Data/counts.rds") %>% as.data.frame()
 
 # --- Load sample metadata to derive phenotypes (Normal vs Tumor) ---
 metadata <- readRDS("Data/metadata.rds")
 
-# --- Retrieve KEGG gene sets from MSigDB ---
-# Using the MEDICUS collection (current). Switch to "CP:KEGG_LEGACY" if needed.
-kegg_df_all <- msigdbr(
-  species     = "Homo sapiens",
-  category    = "C2",
-  subcategory = "CP:KEGG_MEDICUS"
+# --- Retrieve HALLMARK gene sets from MSigDB ---
+# category = "H"  -> Hallmark gene sets
+hallmark_df <- msigdbr(
+  species  = "Homo sapiens",
+  category = "H"
 ) %>%
   dplyr::select(gs_name, gs_id, gene_symbol) %>%
   dplyr::distinct()
 
-#unique_types <- unique(sub("^KEGG_MEDICUS_([^_]+).*", "\\1", kegg_df_all$gs_name))
-#[1] "ENV"       "PATHOGEN"  "REFERENCE" "VARIANT"  
-
-# Keep only KEGG_MEDICUS_REFERENCE and KEGG_MEDICUS_VARIANT
-kegg_df <- kegg_df_all %>%
-  dplyr::filter(grepl("KEGG_MEDICUS_REFERENCE|KEGG_MEDICUS_VARIANT", gs_name))
-
-# Check how many remain per type
-#table(sub("^KEGG_MEDICUS_([^_]+).*", "\\1", unique(kegg_df_filtered$gs_name)))
-#REFERENCE   VARIANT 
-#383       158 
-
 # --- Build 'gene_sets' matrix (GMT-like): row = pathway; col1 = name; col2 = id; col3.. = genes ---
-gs_list   <- split(kegg_df$gene_symbol, kegg_df$gs_name)         # pathway -> vector of genes
-gs_id_map <- tapply(kegg_df$gs_id, kegg_df$gs_name, `[`, 1)      # pathway -> stable ID (first)
-max_len   <- max(lengths(gs_list))                                # widest set dictates matrix width
+gs_list   <- split(hallmark_df$gene_symbol, hallmark_df$gs_name)    # pathway -> vector of genes
+gs_id_map <- tapply(hallmark_df$gs_id, hallmark_df$gs_name, `[`, 1) # pathway -> stable ID (first)
+max_len   <- max(lengths(gs_list))                                  # widest set dictates matrix width
 
 gene_sets <- t(vapply(names(gs_list), function(pw) {
   genes <- unique(gs_list[[pw]])
@@ -64,15 +50,11 @@ PATHWAYS <- list(); PATHWAYS$gs <- gs; PATHWAYS$pathwaynames <- pathwaynames
 # Prepare data and parameters
 # =========================
 
-# --- Ensure genes are rownames and samples are columns (numeric matrix) ---
-# Moves the "Gene" column to rownames and drops it from the data frame.
 stopifnot("Gene" %in% colnames(exp.matrix))
 rownames(exp.matrix) <- exp.matrix$Gene
 exp.matrix <- exp.matrix[, setdiff(colnames(exp.matrix), "Gene"), drop = FALSE]
 exp.matrix <- as.matrix(exp.matrix)
 
-# --- Build the 'normals' logical phenotype from metadata ---
-# TRUE = "Solid Tissue Normal"; FALSE = all other labels (e.g., "Primary Tumor").
 stopifnot(all(c("specimenID","sample_type") %in% colnames(metadata)))
 sample_map <- setNames(metadata$sample_type, metadata$specimenID)
 common_samples <- intersect(colnames(exp.matrix), names(sample_map))
@@ -89,7 +71,6 @@ min_std <- as.numeric(quantile(rsd, 0.25, na.rm = TRUE))
 min_exp <- as.numeric(quantile(as.vector(exp.matrix), 0.10, na.rm = TRUE))
 
 # --- Filter low-value genes and floor at min_exp ---
-# Keep genes with >10% of samples above min_exp; then set values < min_exp to min_exp.
 over   <- apply(exp.matrix, 1, function(x) x > min_exp)
 G.over <- apply(over, 2, mean)
 G.over <- names(G.over)[G.over > 0.10]
@@ -97,7 +78,6 @@ exp.matrix <- exp.matrix[G.over, , drop = FALSE]
 exp.matrix[exp.matrix < min_exp] <- min_exp
 
 # --- Keep up to 5000 most variable genes (heuristic) ---
-# Sort by variance and select top 5000 (or all if fewer).
 gene_var <- apply(exp.matrix, 1, var)
 V <- names(sort(gene_var, decreasing = TRUE))[seq_len(min(5000L, length(gene_var)))]
 V <- V[!is.na(V)]
@@ -105,20 +85,15 @@ exp.matrix <- exp.matrix[V, , drop = FALSE]
 genes <- rownames(exp.matrix)
 allgenes <- as.vector(rownames(exp.matrix))
 
-# --- Pack into DATASET (same fields used by quantify_pathways_deregulation) ---
+# --- Pack into DATASET ---
 DATASET <- list(); DATASET$allgenes <- allgenes; DATASET$normals <- normals; DATASET$data <- exp.matrix
 
 # =========================
-# Light sanity checks (print-only; safe for publication)
+# Light sanity checks
 # =========================
-
-# Dimensions and phenotype balance
 cat("DATASET dimensions (genes x samples): ", nrow(DATASET$data), " x ", ncol(DATASET$data), "\n", sep = "")
-#DATASET dimensions (genes x samples): 8000 x 290
 cat("Normals / Tumors: ", sum(DATASET$normals), " / ", sum(!DATASET$normals), "\n", sep = "")
-#Normals / Tumors: 22 / 268
 
-# Pathway coverage after gene filtering (size of each set post-intersection)
 genes_in_sets <- unique(unlist(lapply(PATHWAYS$gs, function(m) as.vector(m[,1]))))
 overlap_genes <- length(intersect(DATASET$allgenes, genes_in_sets))
 cat("Unique genes in gene sets: ", length(genes_in_sets),
@@ -128,12 +103,10 @@ set_sizes_post <- vapply(PATHWAYS$gs, function(m) sum(DATASET$allgenes %in% as.v
 cat("Pathways (total): ", length(PATHWAYS$gs),
     " | Empty (post-overlap): ", sum(set_sizes_post == 0),
     " | Median size (post-overlap): ", median(set_sizes_post), "\n", sep = "")
-#Pathways (total): 658 | Empty (post-overlap): 16 | Median size (post-overlap): 8
 
 # =========================
 # Run Pathifier
 # =========================
-
 PDS <- quantify_pathways_deregulation(
   DATASET$data,
   DATASET$allgenes,
@@ -142,7 +115,7 @@ PDS <- quantify_pathways_deregulation(
   DATASET$normals, 
   maximize_stability = TRUE,
   attempts = 10,
-  logfile = "logfile.txt",
+  logfile = "logfile_hallmark.txt",
   min_std = min_std,
   min_exp = min_exp
 )
@@ -150,9 +123,8 @@ PDS <- quantify_pathways_deregulation(
 # =========================
 # Clean-up and save
 # =========================
-
 rm(gene_sets, exp.matrix, allgenes, DATASET, PATHWAYS, rsd, V, over, G.over, 
    N.exp.matrix, gs, genes, min_exp, min_std, pathwaynames)
 
-save.image("/STORAGE/csbig/jruiz/1_1_PDS.RData")
+save.image("/STORAGE/csbig/jruiz/1_1_PDS_HALLMARK.RData")
 message("DONE")
