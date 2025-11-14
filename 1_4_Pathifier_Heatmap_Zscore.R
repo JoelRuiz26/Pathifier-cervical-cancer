@@ -116,14 +116,14 @@ make_top_heatmap <- function(type_prefix,        # "REFERENCE" or "VARIANT"
   
   # 6.8 Draw heatmap
   png(out_file,
-      width = 2600, height = 2200, units = "px",
+      width = 4200, height = 2200, units = "px",
       res = 300, pointsize = 10)
   
   heatmap.2(zTop,
             main = main_title,
             density.info = "none",
             trace = "none",
-            margins = c(8, 22),   # extra space on left/right for row labels
+            margins = c(10, 40),   # extra space on left/right for row labels
             col = my_palette,
             breaks = my_breaks,
             Rowv = if (!is.null(row.cluster)) as.dendrogram(row.cluster) else FALSE,
@@ -131,7 +131,7 @@ make_top_heatmap <- function(type_prefix,        # "REFERENCE" or "VARIANT"
             keysize = 1.0,
             ColSideColors = colLabels,
             na.color = "grey95",
-            cexRow = 0.8,         # row label size (pathway names)
+            cexRow = 0.6,         # row label size (pathway names)
             cexCol = 0.6          # column label size (sample IDs)
   )
   
